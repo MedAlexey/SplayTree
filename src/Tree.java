@@ -1,10 +1,15 @@
-import java.util.ArrayList;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class Tree<T extends Comparable<T>>{
+import java.util.*;
+
+public class Tree<T extends Comparable<T>> extends AbstractSet<T> implements SortedSet<T> {
 
     private TreeNode root;
 
-   private class TreeNode {
+    private int size = 0;
+
+    private class TreeNode {
         TreeNode leftSon;
         TreeNode rightSon;
         TreeNode parent;
@@ -21,22 +26,57 @@ public class Tree<T extends Comparable<T>>{
             this.rightSon = rightSon;
         }
 
-   }
+    }
+
+    @Nullable
+    @Override
+    public Comparator<? super T> comparator() {
+        return null;
+    }                         //TODO
+
+    @NotNull
+    @Override
+    public SortedSet<T> subSet(T fromElement, T toElement) {
+        return null;
+    }             //TODO
+
+    @NotNull
+    @Override
+    public SortedSet<T> headSet(T toElement) {
+        return null;
+    }      //TODO
+
+    @NotNull
+    @Override
+    public SortedSet<T> tailSet(T fromElement) {
+        return null;
+    }     //TODO
+
+    @Override
+    public T first() {
+        if (root == null) throw new NoSuchElementException();
+        TreeNode current = root;
+        while (current.leftSon != null) {
+            current = current.leftSon;
+        }
+        return current.value;
+    }
+
+    @Override
+    public T last() {
+        if(root == null) throw new NoSuchElementException();
+        TreeNode current = root;
+        while (current.rightSon != null){
+            current = current.rightSon;
+        }
+        return current.value;
+    }
+
 
 
    public T getRootValue() { return root.value;}
 
 
-
-    public ArrayList<TreeNode> split(T node){
-       find(node);
-
-       ArrayList<TreeNode> result = new ArrayList<>();
-       result.add(root.leftSon);
-       result.add(root.rightSon);
-
-       return result;
-    }
 
 
     public void find(T value){
@@ -57,10 +97,61 @@ public class Tree<T extends Comparable<T>>{
     }
 
 
+    @Override
+    public Iterator<T> iterator() {
+        return new TreeIterator();
+    }
 
+    public class TreeIterator implements Iterator<T> {
 
-    public void add( T value){
-        if (root == null) root = new TreeNode(value, null,null,null);
+        private TreeNode current = null;
+
+        private TreeIterator() {}
+
+        private TreeNode findNext() {
+            if (current.rightSon != null){
+                return findMin(current);
+            }
+            else if (current.value.compareTo(current.parent.value) < 0) return current.parent;
+            return null;
+
+        }
+
+        @Override
+        public boolean hasNext() {
+            return findNext() != null;
+        }
+
+        @Override
+        public T next() {
+            current = findNext();
+            if (current == null) throw new NoSuchElementException();
+            return current.value;
+        }
+
+        @Override
+        public void remove() {
+            Tree.this.remove(current);
+        }
+    }
+
+    private TreeNode findMin(TreeNode start){
+        TreeNode min = start.rightSon;
+        while(min.leftSon != null) min = min.leftSon;
+
+        return min;
+    }
+
+    @Override
+    public int size() {
+        return size;
+    }
+
+    public boolean add(T value){
+        if (root == null) {
+            root = new TreeNode(value, null,null,null);
+            size ++;
+        }
         else {
             TreeNode currentNode = root;  // ячейка, в которой находимся в данный момент
             int cmp;
@@ -71,14 +162,15 @@ public class Tree<T extends Comparable<T>>{
 
                 if (cmp == 0){
                     splay(currentNode);
-                    return;
+                    return true;
                 }
                 if (cmp < 0) {
                     if (currentNode.rightSon != null) currentNode = currentNode.rightSon;
                     else {
                         currentNode.rightSon = new TreeNode(value, currentNode, null, null);
                         splay(currentNode.rightSon);
-                        return;
+                        size ++;
+                        return true;
                     }
                 }
 
@@ -87,15 +179,16 @@ public class Tree<T extends Comparable<T>>{
                     else {
                         currentNode.leftSon = new TreeNode(value, currentNode, null, null);
                         splay(currentNode.leftSon);
-                        return;
+                        size ++;
+                        return true;
                     }
                 }
             }
 
         }
+        return true;
 
     }
-
 
 
     public void remove(T value){
@@ -105,25 +198,25 @@ public class Tree<T extends Comparable<T>>{
         TreeNode rightTreeRoot = root.rightSon;
 
         if (leftTreeRoot != null) {
-            leftTreeRoot.parent = null;
-            findMax(leftTreeRoot);                //ищем мах элемент левого дерева и поднимаем его вверх
+            leftTreeRoot = findMax(leftTreeRoot);                //ищем мах элемент левого дерева и поднимаем его вверх
+            leftTreeRoot.rightSon = rightTreeRoot;
             if (rightTreeRoot != null) {
                 rightTreeRoot.parent = leftTreeRoot;
-                leftTreeRoot.rightSon = rightTreeRoot;
             }
+
             root = leftTreeRoot;
-            return;
+            size --;
         }
         else{
             rightTreeRoot.parent = null;
             root = rightTreeRoot;
-            return;
+            size --;
         }
 
 
     }
 
-    private void findMax(TreeNode root){
+    private TreeNode findMax(TreeNode root){
         TreeNode currentNode = root;
 
         while (currentNode.rightSon != null){
@@ -131,6 +224,7 @@ public class Tree<T extends Comparable<T>>{
         }
 
         splay(currentNode);
+        return currentNode;
     }
 
     private void splay(TreeNode node){
@@ -164,28 +258,30 @@ public class Tree<T extends Comparable<T>>{
             }
         }
 
-        splay(node);
+        splay(node); //может быть лучше сделать while ?
     }
 
-    private void rightRotate(TreeNode parent, TreeNode son){
-        TreeNode sonRightSon = son.rightSon;
+    private void rightRotate(TreeNode parent, TreeNode node){
+        TreeNode nodeRightSon = node.rightSon;
 
-        son.rightSon = parent;
-        parent.parent = son;
-        parent.leftSon = sonRightSon;
-        son.parent = null;
-        root = son;
+        node.rightSon = parent;
+        parent.parent = node;
+        parent.leftSon = nodeRightSon;
+        if (nodeRightSon != null) nodeRightSon.parent = parent;
+        node.parent = null;
+        root = node;
 
     }
 
-    private void leftRotate(TreeNode parent, TreeNode son){
-        TreeNode sonLeftSon = son.leftSon;
+    private void leftRotate(TreeNode parent, TreeNode node){
+        TreeNode nodeLeftSon = node.leftSon;
 
-        son.leftSon = parent;
-        son.parent = null;
-        root = son;
-        parent.parent = son;
-        parent.rightSon = sonLeftSon;
+        node.leftSon = parent;
+        node.parent = null;
+        root = node;
+        parent.parent = node;
+        parent.rightSon = nodeLeftSon;
+        if (nodeLeftSon != null) nodeLeftSon.parent = parent;
     }
 
     private void leftZigZig(TreeNode gparent, TreeNode parent, TreeNode node){
@@ -199,6 +295,7 @@ public class Tree<T extends Comparable<T>>{
 
         gparent.parent = parent;
         gparent.leftSon = parentRightSon;
+        if (parentRightSon != null) parentRightSon.parent = gparent;
 
         //second rotate
         TreeNode nodeRightSon = node.rightSon;
@@ -208,6 +305,7 @@ public class Tree<T extends Comparable<T>>{
         setParent(parent,node);
         parent.parent = node;
         parent.leftSon = nodeRightSon;
+        if (nodeRightSon != null) nodeRightSon.parent = parent;
 
         if (node.parent == null) root = node;
     }
@@ -223,6 +321,7 @@ public class Tree<T extends Comparable<T>>{
 
         gparent.parent = parent;
         gparent.rightSon = parentLeftSon;
+        if (parentLeftSon != null) parentLeftSon.parent = gparent;
 
         //second rotate
         TreeNode nodeLeftSon = node.leftSon;
@@ -233,6 +332,7 @@ public class Tree<T extends Comparable<T>>{
 
         parent.parent = node;
         parent.rightSon = nodeLeftSon;
+        if (nodeLeftSon != null) nodeLeftSon.parent = parent;
 
         if (node.parent == null) root = node;
     }
@@ -247,6 +347,7 @@ public class Tree<T extends Comparable<T>>{
         node.leftSon = parent;
         parent.parent = node;
         parent.rightSon = nodeLeftSon;
+        if (nodeLeftSon != null) nodeLeftSon.parent = parent;
 
         //second rotate
         TreeNode nodeRightSon = node.rightSon;
@@ -257,6 +358,7 @@ public class Tree<T extends Comparable<T>>{
 
         gparent.parent = node;
         gparent.leftSon = nodeRightSon;
+        if (nodeRightSon != null) nodeRightSon.parent = gparent;
 
         if (node.parent == null) root = node;
     }
@@ -271,6 +373,7 @@ public class Tree<T extends Comparable<T>>{
         node.rightSon = parent;
         parent.parent = node;
         parent.leftSon = nodeRightSon;
+        if (nodeRightSon != null) nodeRightSon.parent = parent;
 
         //secont rotate
         TreeNode nodeLeftSon = node.leftSon;
@@ -281,11 +384,12 @@ public class Tree<T extends Comparable<T>>{
 
         gparent.parent = node;
         gparent.rightSon = nodeLeftSon;
+        if (nodeLeftSon != null) nodeLeftSon.parent = gparent;
 
         if (node.parent == null) root = node;
     }
 
-    private void setParent(TreeNode previousSon, TreeNode newSon){
+    private void setParent(TreeNode previousSon, TreeNode newSon){     //for ggParent
         if (newSon.parent != null){
             if (previousSon.parent.leftSon == previousSon) previousSon.parent.leftSon = newSon;
             else previousSon.parent.rightSon = newSon;
