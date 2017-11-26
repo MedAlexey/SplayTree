@@ -5,52 +5,47 @@ import java.util.*;
 
 public class Tree<T extends Comparable<T>> extends AbstractSet<T> implements SortedSet<T> {
 
-    private TreeNode root;
+    private TreeNode<T> root;
 
     private int size = 0;
 
-    private class TreeNode {
+    static class TreeNode<T> {
         TreeNode leftSon;
         TreeNode rightSon;
         TreeNode parent;
         T value;
 
 
-        public TreeNode(T value,
-                        TreeNode parent,
-                        TreeNode leftSon,
-                        TreeNode rightSon){
+        TreeNode(T value,
+                 TreeNode parent,
+                 TreeNode leftSon,
+                 TreeNode rightSon){
             this.value = value;
             this.parent = parent;
             this.leftSon = leftSon;
             this.rightSon = rightSon;
         }
-
     }
 
     @Nullable
     @Override
     public Comparator<? super T> comparator() {
         return null;
-    }                         //TODO
+    }
 
     @NotNull
     @Override
-    public SortedSet<T> subSet(T fromElement, T toElement) {
-        return null;
-    }             //TODO
+    public SortedSet<T> subSet(T fromElement, T toElement) { return new SubSet<>(fromElement,toElement,this); }
 
     @NotNull
     @Override
-    public SortedSet<T> headSet(T toElement) {
-        return null;
-    }      //TODO
+    public SortedSet<T> headSet(T toElement) { return new HeadSet<>(toElement,this);}
 
     @NotNull
     @Override
     public SortedSet<T> tailSet(T fromElement) {
-        return null;
-    }     //TODO
+        return new TailSet<>(fromElement,this);
+    }
 
     @Override
     public T first() {
@@ -59,7 +54,7 @@ public class Tree<T extends Comparable<T>> extends AbstractSet<T> implements Sor
         while (current.leftSon != null) {
             current = current.leftSon;
         }
-        return current.value;
+        return (T) current.value;
     }
 
     @Override
@@ -69,18 +64,16 @@ public class Tree<T extends Comparable<T>> extends AbstractSet<T> implements Sor
         while (current.rightSon != null){
             current = current.rightSon;
         }
-        return current.value;
+        return (T) current.value;
     }
 
 
-
-   public T getRootValue() { return root.value;}
-
-
+    public T getRootValue() { return (T) root.value;}
 
 
     public void find(T value){
-        TreeNode currentNode = root;
+        TreeNode<T> currentNode = root;
+
 
         while(currentNode.value.compareTo(value) != 0){
             if (currentNode.value.compareTo(value) < 0) {
@@ -98,23 +91,43 @@ public class Tree<T extends Comparable<T>> extends AbstractSet<T> implements Sor
 
 
     @Override
-    public Iterator<T> iterator() {
+    public  Iterator<T> iterator() {
         return new TreeIterator();
     }
 
     public class TreeIterator implements Iterator<T> {
 
-        private TreeNode current = null;
+        private TreeNode<T> current = null;
 
-        private TreeIterator() {}
+        private List<TreeNode> listOfNodes;
+
+        private TreeIterator() {
+            listOfNodes = new ArrayList<>();
+            fillListOfNodes(root);
+        }
+
+        private void fillListOfNodes(TreeNode current){
+            listOfNodes.add(current);
+            if (current.leftSon != null) fillListOfNodes(current.leftSon);
+            if (current.rightSon != null) fillListOfNodes(current.rightSon);
+        }
 
         private TreeNode findNext() {
-            if (current.rightSon != null){
-                return findMin(current);
-            }
-            else if (current.value.compareTo(current.parent.value) < 0) return current.parent;
-            return null;
+            if (listOfNodes.size() == 0) return null;
 
+            TreeNode<T> result = listOfNodes.get(0);
+            if (current == null){
+                for (TreeNode<T> node: listOfNodes){
+                    if (node.value.compareTo(result.value) < 0){ result = node; }
+                }
+            }
+            else {
+                for (TreeNode<T> node : listOfNodes) {
+                    if (node.value.compareTo(result.value) < 0 && node.value.compareTo(current.value) > 0) {  result = node;  }
+                }
+            }
+
+            return result;
         }
 
         @Override
@@ -126,7 +139,8 @@ public class Tree<T extends Comparable<T>> extends AbstractSet<T> implements Sor
         public T next() {
             current = findNext();
             if (current == null) throw new NoSuchElementException();
-            return current.value;
+            listOfNodes.remove(current);
+            return (T) current.value;
         }
 
         @Override
@@ -135,25 +149,20 @@ public class Tree<T extends Comparable<T>> extends AbstractSet<T> implements Sor
         }
     }
 
-    private TreeNode findMin(TreeNode start){
-        TreeNode min = start.rightSon;
-        while(min.leftSon != null) min = min.leftSon;
-
-        return min;
-    }
 
     @Override
     public int size() {
         return size;
     }
 
+    @Override
     public boolean add(T value){
         if (root == null) {
             root = new TreeNode(value, null,null,null);
             size ++;
         }
         else {
-            TreeNode currentNode = root;  // ячейка, в которой находимся в данный момент
+            TreeNode<T> currentNode = root;  // ячейка, в которой находимся в данный момент
             int cmp;
 
 
@@ -396,5 +405,32 @@ public class Tree<T extends Comparable<T>> extends AbstractSet<T> implements Sor
         }
     }
 
+    boolean checkInvariant() {
+        return root == null || checkInvariant(root);
+    }
+
+    private boolean checkInvariant(TreeNode<T> node) {
+        TreeNode<T> left = node.leftSon;
+        if (left != null && (left.value.compareTo(node.value) >= 0 || !checkInvariant(left))) return false;
+        TreeNode<T> right = node.rightSon;
+        return right == null || right.value.compareTo(node.value) > 0 && checkInvariant(right);
+    }
+
+    public boolean contains(T value){
+        TreeNode<T> currentNode = root;
+
+        while(currentNode.value.compareTo(value) != 0){
+            if (currentNode.value.compareTo(value) < 0) {
+                if (currentNode.rightSon == null) return false;
+                currentNode = currentNode.rightSon;
+            }
+            else {
+                if (currentNode.leftSon == null) return false;
+                currentNode = currentNode.leftSon;
+            }
+        }
+
+        return true;
+    }
 
 }
