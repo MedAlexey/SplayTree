@@ -123,6 +123,8 @@ public class tests {
 
         SubSet subSet = (SubSet) tree.subSet(7,14);
         Assert.assertEquals(7,subSet.size());
+        Assert.assertEquals(7, subSet.first());
+        Assert.assertEquals(13, subSet.last());
 
         subSet.remove(10);
         Assert.assertFalse(tree.contains(10));
@@ -141,6 +143,18 @@ public class tests {
         try{
             subSet.remove(2);
         }catch (IllegalArgumentException e){System.out.println("SubSet test, remove(2) : IllegalArgumentException");}
+
+
+        //First and last test
+        subSet = (SubSet) tree.subSet(7,9);
+        Assert.assertEquals(7, subSet.first());
+        Assert.assertEquals(8, subSet.last());
+        Assert.assertEquals(2, subSet.size());
+
+        subSet = (SubSet) tree.subSet(2,8);
+        Assert.assertEquals(2, subSet.first());
+        Assert.assertEquals(7, subSet.last());
+        Assert.assertEquals(6,subSet.size());
     }
 
     @Test
@@ -164,6 +178,8 @@ public class tests {
 
         HeadSet headSet = (HeadSet) tree.headSet(7);
         Assert.assertEquals(6,headSet.size());
+        Assert.assertEquals(1, headSet.first());
+        Assert.assertEquals(6, headSet.last());
 
         headSet.add(6);
         Assert.assertTrue(tree.contains(6));
@@ -183,6 +199,17 @@ public class tests {
         try{
             headSet.add(10);
         }catch (IllegalArgumentException e){System.out.println("HeadSet test, add(10) : IllegalArgumentException");}
+
+        //First and last test
+        headSet = (HeadSet) tree.headSet(5);
+        Assert.assertEquals(1,headSet.first());
+        Assert.assertEquals(4, headSet.last());
+        Assert.assertEquals(4, headSet.size());
+
+        headSet = (HeadSet) tree.headSet(15);
+        Assert.assertEquals(1,headSet.first());
+        Assert.assertEquals(14,headSet.last());
+        Assert.assertEquals(13, headSet.size());  //не 14 т.к. удаляли 5ку
     }
 
     @Test
@@ -206,6 +233,8 @@ public class tests {
 
         TailSet tailSet = (TailSet) tree.tailSet(6);
         Assert.assertEquals(10, tailSet.size());
+        Assert.assertEquals(6, tailSet.first());
+        Assert.assertEquals(15, tailSet.last());
 
         tailSet.add(16);
         Assert.assertTrue(tree.contains(16));
@@ -226,6 +255,17 @@ public class tests {
         try{
             tailSet.add(4);
         }catch(IllegalArgumentException e){System.out.println("TailSet test, add(4) : IllegalArgumentException");}
+
+        //First and last test
+        tailSet = (TailSet) tree.tailSet(12);
+        Assert.assertEquals(12, tailSet.first());
+        Assert.assertEquals(16, tailSet.last());
+        Assert.assertEquals(4, tailSet.size());
+
+        tailSet = (TailSet) tree.tailSet(9);
+        Assert.assertEquals(9, tailSet.first());
+        Assert.assertEquals(16, tailSet.last());
+        Assert.assertEquals(7, tailSet.size());
     }
 
     @Test

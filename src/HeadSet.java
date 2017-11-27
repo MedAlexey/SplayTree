@@ -1,5 +1,6 @@
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.reflect.generics.tree.*;
 
 import java.util.AbstractSet;
 import java.util.Comparator;
@@ -47,7 +48,7 @@ public class HeadSet<T extends Comparable<T>> extends AbstractSet<T> implements 
         Iterator iterator = delegate.iterator();
         while (iterator.hasNext()){
             T next = (T) iterator.next();
-            if (toElement.compareTo( next) > 0) result++;
+            if (toElement.compareTo(next) > 0) result++;
         }
 
         return result;
@@ -78,10 +79,31 @@ public class HeadSet<T extends Comparable<T>> extends AbstractSet<T> implements 
     }
 
     @Override
-    public T first() { return null; }
+    public T first() {
+        Iterator iterator = delegate.iterator();
+        T result = null;
+        while (iterator.hasNext()){
+            T next = (T) iterator.next();
+            if (next.compareTo(toElement) < 0) {
+                if (result == null) result = next;
+                else result = result.compareTo(next) > 0 ? next : result;
+            }
+        }
+        return result;
+    }
 
     @Override
     public T last() {
-        return null;
+        Iterator iterator = delegate.iterator();
+        T result = null;
+        while(iterator.hasNext()){
+            T next = (T) iterator.next();
+            if (next.compareTo(toElement) < 0) {
+                if (result == null) result = next;
+                else result = result.compareTo(next) < 0 && next.compareTo(toElement) < 0 ? next : result;
+            }
+        }
+
+        return result;
     }
 }

@@ -77,11 +77,29 @@ public class TailSet<T extends Comparable<T>> extends AbstractSet<T> implements 
 
     @Override
     public T first() {
-        return null;
+        Iterator iterator = delegate.iterator();
+        T result = null;
+        while (iterator.hasNext()){
+            T next = (T) iterator.next();
+            if (next.compareTo(fromElement) >= 0){
+                if (result == null) result = next;
+                else result = result.compareTo(next) > 0 ? next : result;
+            }
+        }
+        return result;
     }
 
     @Override
     public T last() {
-        return null;
+        Iterator itrator = delegate.iterator();
+        T result = null;
+        while (itrator.hasNext()){
+            T next = (T) itrator.next();
+            if (next.compareTo(fromElement) >= 0){
+                if (result == null) result = next;
+                else result = result.compareTo(next) < 0 ? next : result;
+            }
+        }
+        return result;
     }
 }

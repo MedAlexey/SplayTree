@@ -80,10 +80,30 @@ public class SubSet<T extends Comparable<T>> extends AbstractSet<T> implements S
     }
 
     @Override
-    public T first() {return null; }
+    public T first() {
+        Iterator iterator = delegate.iterator();
+        T result = null;
+        while (iterator.hasNext()){
+            T next = (T) iterator.next();
+            if (next.compareTo(fromElement) >= 0 && next.compareTo(toElement) < 0) {
+                if (result == null) result = next;
+                else result = next.compareTo(result) < 0 ? next : result;
+            }
+        }
+       return result;
+    }
 
     @Override
     public T last() {
-        return null;
+        Iterator iterator = delegate.iterator();
+        T result = null;
+        while (iterator.hasNext()){
+            T next = (T) iterator.next();
+            if (next.compareTo(fromElement) >= 0 && next.compareTo(toElement) < 0) {
+                if (result == null) result = next;
+                else result = result.compareTo(next) < 0 ? next : result;
+            }
+        }
+        return result;
     }
 }
