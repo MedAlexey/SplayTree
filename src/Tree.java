@@ -113,7 +113,7 @@ public class Tree<T extends Comparable<T>> extends AbstractSet<T> implements Sor
         }
 
         private TreeNode findNext() {
-            if (listOfNodes.size() == 0) return null;
+            if (listOfNodes.isEmpty()) return null;
 
             TreeNode<T> result = listOfNodes.get(0);
             if (current == null){

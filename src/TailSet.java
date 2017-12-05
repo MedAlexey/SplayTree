@@ -1,10 +1,7 @@
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.AbstractSet;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.SortedSet;
+import java.util.*;
 
 /*
 //Returns a view of the portion of this set whose elements are greater than or equal to fromElement
@@ -23,7 +20,7 @@ public class TailSet<T extends Comparable<T>> extends AbstractSet<T> implements 
     }
 
     public boolean remove(T value){
-        if (fromElement.compareTo(value) > 0) throw new IllegalArgumentException();
+        if ((fromElement.compareTo(value) > 0 || delegate.last().compareTo(value) < 0) || !contains(value)) throw new IllegalArgumentException();
         delegate.remove(value);
         return true;
     }
@@ -34,9 +31,50 @@ public class TailSet<T extends Comparable<T>> extends AbstractSet<T> implements 
         return true;
     }
 
+    public boolean contains(T value){
+        Iterator iterator = this.iterator();
+        while (iterator.hasNext()){
+            if ( ((T) iterator.next()).compareTo(value) == 0) return true;
+        }
+
+        return false;
+    }
+
     @Override
     public Iterator<T> iterator() {
-        return null;
+        return new TailSetIterator();
+    }
+
+    public class TailSetIterator implements Iterator<T>{
+
+        private List<T> listOfNodes;
+
+        private TailSetIterator(){
+            listOfNodes = new ArrayList<>();
+            fillListOfNodes();
+        }
+
+        private void fillListOfNodes(){
+            Iterator iterator = delegate.iterator();
+            while (iterator.hasNext()){
+                T next = (T) iterator.next();
+                if (next.compareTo(fromElement) >= 0) listOfNodes.add(next);
+            }
+        }
+
+        @Override
+        public boolean hasNext() {
+            return !listOfNodes.isEmpty();
+        }
+
+        @Override
+        public T next() {
+            if (hasNext()){
+                T result = listOfNodes.get(0);
+                listOfNodes.remove(0);
+                return result;
+            }else throw new NoSuchElementException();
+        }
     }
 
     @Override
@@ -60,19 +98,21 @@ public class TailSet<T extends Comparable<T>> extends AbstractSet<T> implements 
     @NotNull
     @Override
     public SortedSet<T> subSet(T fromElement, T toElement) {
-        return null;
+        if (fromElement.compareTo(this.fromElement) >= 0 && toElement.compareTo(this.fromElement) > 0 && toElement.compareTo(this.last()) <=0)
+            return new SubSet<>(fromElement,toElement,delegate);
+        else throw new IndexOutOfBoundsException();
     }
 
     @NotNull
     @Override
-    public SortedSet<T> headSet(T toElement) {
-        return null;
-    }
+    public SortedSet<T> headSet(T toElement) {return null; }
 
     @NotNull
     @Override
     public SortedSet<T> tailSet(T fromElement) {
-        return null;
+        if (fromElement.compareTo(this.fromElement) >= 0 && fromElement.compareTo(this.last()) <= 0)
+            return new TailSet<>(fromElement,delegate);
+        else throw new IndexOutOfBoundsException();
     }
 
     @Override

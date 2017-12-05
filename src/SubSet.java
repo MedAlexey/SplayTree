@@ -1,9 +1,7 @@
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import java.util.AbstractSet;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.SortedSet;
+
+import java.util.*;
 
 /*
 //Returns a view of the portion of this set whose elements range from fromElement, inclusive, to toElement, exclusive.
@@ -24,7 +22,7 @@ public class SubSet<T extends Comparable<T>> extends AbstractSet<T> implements S
     }
 
     public boolean remove(T value){
-        if (toElement.compareTo(value) > 0 && fromElement.compareTo(value) <= 0) delegate.remove(value);
+        if ((toElement.compareTo(value) > 0 && fromElement.compareTo(value) <= 0) && contains(value)) delegate.remove(value);
         else throw new IllegalArgumentException();
 
         return true;
@@ -38,8 +36,49 @@ public class SubSet<T extends Comparable<T>> extends AbstractSet<T> implements S
         return true;
     }
 
+    public boolean contains(T value){
+        Iterator iterator = this.iterator();
+        while (iterator.hasNext()){
+            if (value.compareTo((T) iterator.next()) == 0) return true;
+        }
+        return false;
+    }
+
     @Override
-    public Iterator<T> iterator() { return null; }
+    public Iterator<T> iterator() { return new SubSetIterator(); }
+
+    public class SubSetIterator implements Iterator<T>{
+
+        private List<T> listOfNodes;
+
+        private SubSetIterator(){
+            listOfNodes = new ArrayList<>();
+            fillListOfNodes();
+        }
+
+        private void fillListOfNodes(){
+            Iterator treeIterator = delegate.iterator();
+            while (treeIterator.hasNext()){
+                T next = (T) treeIterator.next();
+                if (next.compareTo(fromElement) >= 0 && next.compareTo(toElement) < 0) listOfNodes.add(next);
+            }
+        }
+
+        @Override
+        public boolean hasNext() {
+            return !listOfNodes.isEmpty();
+        }
+
+        @Override
+        public T next() {
+            if (hasNext()){
+                T result = listOfNodes.get(0);
+                listOfNodes.remove(0);
+                return result;
+            }
+            else throw new NoSuchElementException();
+        }
+    }
 
     @Override
     public int size() {
@@ -64,20 +103,18 @@ public class SubSet<T extends Comparable<T>> extends AbstractSet<T> implements S
     @NotNull
     @Override
     public SortedSet<T> subSet(T fromElement, T toElement) {
-        return null;
+        if (fromElement.compareTo(this.fromElement) >= 0 && toElement.compareTo(this.toElement) < 0)
+            return new SubSet<>(fromElement,toElement,delegate);
+        else throw new IndexOutOfBoundsException();
     }
 
     @NotNull
     @Override
-    public SortedSet<T> headSet(T toElement) {
-        return null;
-    }
+    public SortedSet<T> headSet(T toElement) {return null; }
 
     @NotNull
     @Override
-    public SortedSet<T> tailSet(T fromElement) {
-        return null;
-    }
+    public SortedSet<T> tailSet(T fromElement) {return null; }
 
     @Override
     public T first() {
