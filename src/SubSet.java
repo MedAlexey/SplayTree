@@ -21,7 +21,9 @@ public class SubSet<T extends Comparable<T>> extends AbstractSet<T> implements S
         this.delegate = delegate;
     }
 
-    public boolean remove(T value){
+    @Override
+    public boolean remove(Object o) {
+        T value = (T) o;
         if ((toElement.compareTo(value) > 0 && fromElement.compareTo(value) <= 0) && contains(value)) delegate.remove(value);
         else throw new IllegalArgumentException();
 
@@ -36,7 +38,10 @@ public class SubSet<T extends Comparable<T>> extends AbstractSet<T> implements S
         return true;
     }
 
-    public boolean contains(T value){
+    @Override
+    public boolean contains(Object o) {
+        T value = (T) o;
+
         Iterator iterator = this.iterator();
         while (iterator.hasNext()){
             if (value.compareTo((T) iterator.next()) == 0) return true;
@@ -47,7 +52,7 @@ public class SubSet<T extends Comparable<T>> extends AbstractSet<T> implements S
     @Override
     public Iterator<T> iterator() { return new SubSetIterator(); }
 
-    public class SubSetIterator implements Iterator<T>{
+    public class SubSetIterator  implements Iterator<T>{
 
         private List<T> listOfNodes;
 
@@ -78,6 +83,7 @@ public class SubSet<T extends Comparable<T>> extends AbstractSet<T> implements S
             }
             else throw new NoSuchElementException();
         }
+
     }
 
     @Override
@@ -110,11 +116,19 @@ public class SubSet<T extends Comparable<T>> extends AbstractSet<T> implements S
 
     @NotNull
     @Override
-    public SortedSet<T> headSet(T toElement) {return null; }
+    public SortedSet<T> headSet(T toElement) {
+        if (toElement.compareTo(this.toElement) < 0 && toElement.compareTo(this.fromElement) >= 0){
+            return new SubSet<>(this.fromElement, toElement, delegate);
+        } else throw new IndexOutOfBoundsException();
+    }
 
     @NotNull
     @Override
-    public SortedSet<T> tailSet(T fromElement) {return null; }
+    public SortedSet<T> tailSet(T fromElement) {
+        if (fromElement.compareTo(this.fromElement) >= 0 && fromElement.compareTo(this.toElement) < 0){
+            return new SubSet<>(fromElement, this.toElement, delegate);
+        } else throw new IndexOutOfBoundsException();
+    }
 
     @Override
     public T first() {

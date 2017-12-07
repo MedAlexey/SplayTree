@@ -19,19 +19,26 @@ public class TailSet<T extends Comparable<T>> extends AbstractSet<T> implements 
         this.delegate = delegate;
     }
 
-    public boolean remove(T value){
+    @Override
+    public boolean remove(Object o) {
+        T value = (T) o;
+
         if ((fromElement.compareTo(value) > 0 || delegate.last().compareTo(value) < 0) || !contains(value)) throw new IllegalArgumentException();
         delegate.remove(value);
         return true;
     }
 
+    @Override
     public boolean add(T value){
         if (fromElement.compareTo(value) > 0) throw new IllegalArgumentException();
         delegate.add(value);
         return true;
     }
 
-    public boolean contains(T value){
+    @Override
+    public boolean contains(Object o) {
+        T value = (T) o;
+
         Iterator iterator = this.iterator();
         while (iterator.hasNext()){
             if ( ((T) iterator.next()).compareTo(value) == 0) return true;
@@ -105,7 +112,11 @@ public class TailSet<T extends Comparable<T>> extends AbstractSet<T> implements 
 
     @NotNull
     @Override
-    public SortedSet<T> headSet(T toElement) {return null; }
+    public SortedSet<T> headSet(T toElement) {
+        if (toElement.compareTo(this.fromElement) > 0 && toElement.compareTo(this.last()) <= 0){
+            return new SubSet<>(this.fromElement, toElement, delegate);
+        }else throw new IndexOutOfBoundsException();
+    }
 
     @NotNull
     @Override

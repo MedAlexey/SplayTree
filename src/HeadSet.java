@@ -20,6 +20,7 @@ public class HeadSet<T extends Comparable<T>> extends AbstractSet<T> implements 
         this.delegate = delegate;
     }
 
+    @Override
     public boolean add(T value){
         if (toElement.compareTo(value) > 0) delegate.add(value);
         else throw new IllegalArgumentException();
@@ -27,14 +28,20 @@ public class HeadSet<T extends Comparable<T>> extends AbstractSet<T> implements 
         return true;
     }
 
-    public boolean remove(T value){
+    @Override
+    public boolean remove(Object o) {
+        T value = (T) o;
+
         if ((toElement.compareTo(value) > 0 && delegate.first().compareTo(value) < 0) && contains(value)) delegate.remove(value);
         else throw new IllegalArgumentException();
 
         return true;
     }
 
-    public boolean contains(T value){
+    @Override
+    public boolean contains(Object o) {
+        T value = (T) o;
+
         Iterator iterator = this.iterator();
         while(iterator.hasNext()){
             if (value.compareTo((T) iterator.next()) == 0) return true;
@@ -116,7 +123,12 @@ public class HeadSet<T extends Comparable<T>> extends AbstractSet<T> implements 
 
     @NotNull
     @Override
-    public SortedSet<T> tailSet(T fromElement) { return null; }
+    public SortedSet<T> tailSet(T fromElement) {
+        if (fromElement.compareTo(this.first()) >= 0 && fromElement.compareTo(this.toElement) < 0){
+            return new SubSet<>(fromElement, this.toElement, delegate);
+        }
+        else throw new IndexOutOfBoundsException();
+    }
 
     @Override
     public T first() {
