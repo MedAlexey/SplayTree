@@ -1,19 +1,27 @@
-import com.sun.deploy.association.AssociationException;
 import org.junit.Assert;
 import org.junit.Test;
-
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.SortedSet;
 
-public class tests {
+public class tests  {
+
+    public static <T extends Throwable> void assertThrows(Class<T> expectedType, Runnable runnable){
+
+        String expectedExeprion = expectedType.getTypeName();
+        try {
+            runnable.run();
+        }catch (Throwable exeption){
+            if (!exeption.toString().equals(expectedExeprion)) Assert.fail();
+        }
+    }
 
     @Test
     public void add(){
         Tree tree = new Tree<Integer>();
         tree.add(7);
         Assert.assertEquals(1,tree.size());
-        Assert.assertEquals(7,tree.getRootValue());
+        Assert.assertEquals(7, tree.getRootValue());
         Assert.assertTrue(tree.checkInvariant());
 
         tree.add(9);
@@ -63,6 +71,9 @@ public class tests {
         tree.find(7);
         Assert.assertEquals(7, tree.getRootValue());
         Assert.assertTrue(tree.checkInvariant());
+
+        Runnable runable = () -> tree.find(100);
+        assertThrows(NoSuchElementException.class, runable);
     }
 
     @Test
@@ -106,7 +117,7 @@ public class tests {
 
     @Test
     public void subSet(){
-        Tree tree = new Tree<Integer>();
+        Tree<Integer> tree = new Tree<>();
         tree.add(11);
         tree.add(5);
         tree.add(4);
@@ -138,13 +149,13 @@ public class tests {
         Assert.assertTrue(tree.checkInvariant());
         Assert.assertEquals(7,subSet.size());
 
-        try{
-            subSet.add(1);
-        }catch (IllegalArgumentException e){System.out.println("SubSet test, add(1) : IllegalArgumentException");}
+        SortedSet finalSubSet = subSet;
+        Runnable runable = () -> finalSubSet.add(1);
+        assertThrows(IllegalArgumentException.class, runable);
 
-        try{
-            subSet.remove(2);
-        }catch (IllegalArgumentException e){System.out.println("SubSet test, remove(2) : IllegalArgumentException");}
+        SortedSet finalSubSet1 = subSet;
+        runable = () -> finalSubSet1.remove(2);
+        assertThrows(IllegalArgumentException.class, runable);
 
 
         //First and last test
@@ -161,7 +172,7 @@ public class tests {
 
     @Test
     public void headSet(){
-        Tree tree = new Tree<Integer>();
+        Tree<Integer> tree = new Tree<>();
         tree.add(11);
         tree.add(5);
         tree.add(4);
@@ -194,13 +205,13 @@ public class tests {
         Assert.assertTrue(tree.checkInvariant());
         Assert.assertEquals(5, headSet.size());
 
-        try {
-            headSet.remove(9);
-        }catch(IllegalArgumentException e){System.out.println("HeadSet test, remove(9) : IllegalArgumentException");}
+        SortedSet finalHeadSet1 = headSet;
+        Runnable runable = () -> finalHeadSet1.remove(9);
+        assertThrows(IllegalArgumentException.class, runable);
 
-        try{
-            headSet.add(10);
-        }catch (IllegalArgumentException e){System.out.println("HeadSet test, add(10) : IllegalArgumentException");}
+        SortedSet finalHeadSet = headSet;
+        runable = () -> finalHeadSet.add(10);
+        assertThrows(IllegalArgumentException.class, runable);
 
         //First and last test
         headSet = tree.headSet(5);
@@ -216,7 +227,7 @@ public class tests {
 
     @Test
     public void tailSet(){
-        Tree tree = new Tree<Integer>();
+        Tree<Integer> tree = new Tree<>();
         tree.add(11);
         tree.add(5);
         tree.add(4);
@@ -250,13 +261,13 @@ public class tests {
         Assert.assertTrue(tree.checkInvariant());
         Assert.assertEquals(10, tailSet.size());
 
-        try{
-            tailSet.remove(1);
-        }catch (IllegalArgumentException e){System.out.println("TailSet test, remove(1) : IllegalArgumentException");}
+        SortedSet finalTailSet = tailSet;
+        Runnable runable = () -> finalTailSet.remove(1);
+        assertThrows(IllegalArgumentException.class, runable);
 
-        try{
-            tailSet.add(4);
-        }catch(IllegalArgumentException e){System.out.println("TailSet test, add(4) : IllegalArgumentException");}
+        SortedSet finalTailSet1 = tailSet;
+        runable = () -> finalTailSet1.add(4);
+        assertThrows(IllegalArgumentException.class, runable);
 
         //First and last test
         tailSet = tree.tailSet(12);
@@ -272,7 +283,7 @@ public class tests {
 
     @Test
     public void iteratorTest(){
-        Tree tree = new Tree<Integer>();
+        Tree<Integer> tree = new Tree<>();
         tree.add(1);
         tree.add(2);
         tree.add(12);
@@ -282,6 +293,7 @@ public class tests {
         tree.add(3);
 
         Iterator iterator = tree.iterator();
+        iterator.hasNext();
         Assert.assertEquals(1, iterator.next());
         Assert.assertEquals(2, iterator.next());
         Assert.assertEquals(3, iterator.next());
@@ -289,15 +301,14 @@ public class tests {
         Assert.assertEquals(12, iterator.next());
         Assert.assertEquals(15, iterator.next());
         Assert.assertEquals(17, iterator.next());
-        try{
-            iterator.next();
-        }catch (NoSuchElementException e) {System.out.println("Iterator test: NoSuchElementException");}
 
+        Runnable runable = () -> iterator.next();
+        assertThrows(NoSuchElementException.class, runable);
     }
 
     @Test
     public void subSetSubSet(){
-        Tree tree = new Tree<Integer>();
+        Tree<Integer> tree = new Tree<>();
         tree.add(11);
         tree.add(5);
         tree.add(4);
@@ -330,23 +341,14 @@ public class tests {
         Assert.assertEquals(1, subSetSubSet.size());
         Assert.assertTrue(tree.checkInvariant());
 
-        try{
-            subSetSubSet.remove(6);
-        }catch (IllegalArgumentException e){
-            System.out.println("SubSetSubSet, remove(6) : IllegalArgumentException");
-        }
+        Runnable runable = () -> subSetSubSet.remove(6);
+        assertThrows(IllegalArgumentException.class, runable);
 
-        try{
-            subSetSubSet.remove(4);
-        }catch (IllegalArgumentException e){
-            System.out.println("SubSetSubSet, remove(4) : IllegalArgumentException");
-        }
+        runable = () -> subSetSubSet.remove(4);
+        assertThrows(IllegalArgumentException.class, runable);
 
-        try{
-            subSetSubSet.remove(8);
-        }catch (IllegalArgumentException e){
-            System.out.println("SubSetSubSet, remove(8) : IllegalArgumentException");
-        }
+        runable = () -> subSetSubSet.remove(8);
+        assertThrows(IllegalArgumentException.class, runable);
 
         subSetSubSet.add(6);
         Assert.assertTrue(tree.contains(6));
@@ -360,35 +362,23 @@ public class tests {
         Assert.assertTrue(tree.contains(5));
         Assert.assertTrue(tree.checkInvariant());
 
-        try{
-            subSetSubSet.add(3);
-        }catch (IllegalArgumentException e){
-            System.out.println("SubSetSubSet, add(3) : IllegalArgumentException");
-        }
+        runable = () -> subSetSubSet.add(3);
+        assertThrows(IllegalArgumentException.class, runable);
 
-        try{
-            subSetSubSet.add(10);
-        }catch (IllegalArgumentException e){
-            System.out.println("SubSetSubSet, add(10) : IllegalArgumentException");
-        }
+        runable = () -> subSetSubSet.add(10);
+        assertThrows(IllegalArgumentException.class, runable);
 
         //Создание множеств, выходящих за пределы данного
-        try{
-            subSetSubSet = subSet.subSet(2,9);
-        }catch(IndexOutOfBoundsException e) {
-            System.out.println("SubSetSubSet, create(2,9) : IndexOutOfBoundsException");
-        }
+        runable = () -> subSet.subSet(2,9);
+        assertThrows(IndexOutOfBoundsException.class, runable);
 
-        try{
-            subSet = subSet.subSet(4,12);
-        }catch(IndexOutOfBoundsException e){
-            System.out.println("SubSetSubSet, create(4, 12) : IndexOutOfBoundsException");
-        }
+        runable = () -> subSet.subSet(4, 12);
+        assertThrows(IndexOutOfBoundsException.class, runable);
     }
 
     @Test
     public void subSetHeadSet(){
-        Tree tree = new Tree<Integer>();
+        Tree<Integer> tree = new Tree<>();
         tree.add(1);
         tree.add(2);
         tree.add(12);
@@ -410,22 +400,16 @@ public class tests {
         Assert.assertFalse(tree.contains(2));
         Assert.assertTrue(tree.checkInvariant());
 
-        try{
-            headSet.remove(17);
-        }catch (IllegalArgumentException e){
-            System.out.println("SubSetHeadSet, remove(17) : IllegalArgumentException");
-        }
+        Runnable runable = () -> headSet.remove(17);
+        assertThrows(IllegalArgumentException.class, runable);
 
-        try{
-            headSet.add(0);
-        }catch (IllegalArgumentException e){
-            System.out.println("SubSetHeadSet, add(0) : IllegalArgumentException");
-        }
+        runable = () -> headSet.add(17);
+        assertThrows(IllegalArgumentException.class, runable);
     }
 
     @Test
     public void subSetTailSet(){
-        Tree tree = new Tree<Integer>();
+        Tree<Integer> tree = new Tree<>();
         tree.add(1);
         tree.add(2);
         tree.add(12);
@@ -445,12 +429,23 @@ public class tests {
         tailSet.add(16);
         Assert.assertTrue(tree.contains(16));
         Assert.assertTrue(tree.checkInvariant());
-    }
 
+        Runnable runable = () -> tailSet.add(4);
+        assertThrows(IllegalArgumentException.class, runable);
+
+        runable = () -> tailSet.remove(20);
+        assertThrows(IllegalArgumentException.class, runable);
+
+        runable = () -> subSet.tailSet(1);
+        assertThrows(IndexOutOfBoundsException.class, runable);
+
+        runable = () -> subSet.tailSet(17);
+        assertThrows(IndexOutOfBoundsException.class, runable);
+    }
 
     @Test
     public void subSetIterator(){
-        Tree tree = new Tree<Integer>();
+        Tree<Integer> tree = new Tree<>();
         tree.add(1);
         tree.add(2);
         tree.add(12);
@@ -470,16 +465,13 @@ public class tests {
         Assert.assertEquals(3, iterator.next());
         Assert.assertFalse(iterator.hasNext());
 
-        try{
-            iterator.next();
-        }catch (NoSuchElementException e){
-            System.out.println("subSetIterator test: NoSuchElementException");
-        }
+        Runnable runable = () -> iterator.next();
+        assertThrows(NoSuchElementException.class, runable);
     }
 
     @Test
     public void headSetHeadSet(){
-        Tree tree = new Tree<Integer>();
+        Tree<Integer> tree = new Tree<>();
         tree.add(1);
         tree.add(2);
         tree.add(12);
@@ -506,35 +498,23 @@ public class tests {
         Assert.assertEquals(3, headSetHeadSet.size());
         Assert.assertTrue(tree.checkInvariant());
 
-        try{
-            headSetHeadSet.remove(11);
-        }catch (IllegalArgumentException e){
-            System.out.println("HeadSetHeadSet, remove(11) : IllegalArgumentException");
-        }
+        Runnable runable = () -> headSetHeadSet.remove(11);
+        assertThrows(IllegalArgumentException.class, runable);
 
-        try{
-            headSetHeadSet.add(15);
-        }catch (IllegalArgumentException e){
-            System.out.println("HeadSetHeadSet, add(15) : IllegalArgumentException");
-        }
+        runable = () -> headSetHeadSet.add(15);
+        assertThrows(IllegalArgumentException.class, runable);
 
-        try{
-            headSetHeadSet.remove(4);
-        }catch (IllegalArgumentException e){
-            System.out.println("HeadSetHeadSet, remove(4) : IllegalArgumentException");
-        }
+        runable = () -> headSetHeadSet.remove(4);
+        assertThrows(IllegalArgumentException.class, runable);
 
-        try{
-            headSetHeadSet = headSet.headSet(17);
-        }catch(IndexOutOfBoundsException e){
-            System.out.println("HeadSetHeadSet, create(17) : IndexOutOfBoundsException");
-        }
+        runable = () -> headSet.headSet(17);
+        assertThrows(IndexOutOfBoundsException.class, runable);
 
     }
 
     @Test
     public void headSetSubSet(){
-        Tree tree = new Tree<Integer>();
+        Tree<Integer> tree = new Tree<>();
         tree.add(13);
         tree.add(7);
         tree.add(4);
@@ -558,34 +538,22 @@ public class tests {
         Assert.assertEquals(10, subSet.last());
         Assert.assertEquals(4, subSet.first());
 
-        try{
-            subSet.remove(11);
-        }catch (IllegalArgumentException e){
-            System.out.println("HeadSetSubSet, remove(11) : IllegalArgumentException");
-        }
+        Runnable runable = () -> subSet.remove(11);
+        assertThrows(IllegalArgumentException.class, runable);
 
-        try{
-            subSet.add(3);
-        }catch (IllegalArgumentException e){
-            System.out.println("HeadSetSubSet, add(3) : IllegalArgumentException");
-        }
+        runable = () -> subSet.add(3);
+        assertThrows(IllegalArgumentException.class, runable);
 
-        try{
-            subSet.remove(7);
-        }catch (IllegalArgumentException e){
-            System.out.println("HeadSetSubSet, remove(7) : IllegalArgumentException");
-        }
+        runable = () -> subSet.remove(7);
+        assertThrows(IllegalArgumentException.class, runable);
 
-        try{
-            headSet.subSet(2,13);
-        }catch (IndexOutOfBoundsException e){
-            System.out.println("HeadSetSubSet, create(2, 13) : IndexOutOfBoundsException");
-        }
+        runable = () -> headSet.subSet(2,13);
+        assertThrows(IndexOutOfBoundsException.class, runable);
     }
 
     @Test
     public void headSetTailSet(){
-        Tree tree = new Tree<Integer>();
+        Tree<Integer> tree = new Tree<>();
         tree.add(13);
         tree.add(7);
         tree.add(4);
@@ -608,23 +576,17 @@ public class tests {
         Assert.assertTrue(tree.checkInvariant());
         Assert.assertEquals(7, tree.size());
 
-        try{
-            tailSet.remove(14);
-        }catch (IllegalArgumentException e){
-            System.out.println("HeadSetTailSet, remove(14) : IllegalArgumentException");
-        }
+        Runnable runable = () -> tailSet.remove(14);
+        assertThrows(IllegalArgumentException.class, runable);
 
-        try{
-            tailSet.add(1);
-        }catch (IllegalArgumentException e){
-            System.out.println("HeadSetTailSet, add(1) : IllegalArgumentException");
-        }
+        runable = () -> tailSet.add(1);
+        assertThrows(IllegalArgumentException.class, runable);
 
     }
 
     @Test
     public void headSetIterator(){
-        Tree tree = new Tree<Integer>();
+        Tree<Integer> tree = new Tree<>();
         tree.add(1);
         tree.add(2);
         tree.add(12);
@@ -646,16 +608,13 @@ public class tests {
         Assert.assertEquals(11, iterator.next());
         Assert.assertFalse(iterator.hasNext());
 
-        try{
-            iterator.next();
-        }catch (NoSuchElementException e){
-            System.out.println("headSetIterator test: NoSuchElementException");
-        }
+        Runnable runable = () -> iterator.next();
+        assertThrows(NoSuchElementException.class, runable);
     }
 
     @Test
     public void tailSetTailSet(){
-        Tree tree = new Tree<Integer>();
+        Tree<Integer> tree = new Tree<>();
         tree.add(13);
         tree.add(7);
         tree.add(4);
@@ -681,35 +640,22 @@ public class tests {
         Assert.assertEquals(17, tailSetTailSet.last());
         Assert.assertTrue(tree.checkInvariant());
 
-        try{
-            tailSetTailSet.add(5);
-        }catch (IllegalArgumentException e){
-            System.out.println("TailSetTailSet, add(5) : IllegalArgumentException");
-        }
+        Runnable runable = () -> tailSetTailSet.add(5);
+        assertThrows(IllegalArgumentException.class, runable);
 
-        try{
-            tailSetTailSet.remove(10);
-        }catch (IllegalArgumentException e){
-            System.out.println("TailSetTailSet, remove(10) : IllegalArgumentException");
-        }
+        runable = () -> tailSetTailSet.add(17);
+        assertThrows(IllegalArgumentException.class, runable);
 
-        try {
-            tailSetTailSet.remove(12);
-        }catch (IllegalArgumentException e){
-            System.out.println("TailSetTailSet, remove(12) : IllegalArgumentException");
-        }
+        runable = () -> tailSetTailSet.remove(12);
+        assertThrows(IllegalArgumentException.class, runable);
 
-
-        try{
-            tailSetTailSet = tailSet.tailSet(3);
-        }catch (IndexOutOfBoundsException e){
-            System.out.println("TailSetTailSet, create(3) : IndexOutOfBoundsException");
-        }
+        runable = () -> tailSet.tailSet(3);
+        assertThrows(IndexOutOfBoundsException.class, runable);
     }
 
     @Test
     public void tailSetSubSet(){
-        Tree tree = new Tree<Integer>();
+        Tree<Integer> tree = new Tree<>();
         tree.add(13);
         tree.add(7);
         tree.add(4);
@@ -731,35 +677,22 @@ public class tests {
         Assert.assertTrue(tree.checkInvariant());
         Assert.assertEquals(2, subSet.size());
 
-        try{
-            subSet.add(17);
-        }catch (IllegalArgumentException e){
-            System.out.println("TailSetSubSet, add(17) : IllegalArgumentException");
-        }
+        Runnable runable = () -> subSet.add(17);
+        assertThrows(IllegalArgumentException.class, runable);
 
-        try{
-            subSet.remove(2);
-        }catch(IllegalArgumentException e){
-            System.out.println("TailSetSubSet, remove(2) : IllegalArgumentException");
-        }
+        runable = () -> subSet.remove(2);
+        assertThrows(IllegalArgumentException.class, runable);
 
-        try{
-            subSet.remove(11);
-        }catch (IllegalArgumentException e){
-            System.out.println("TailSetSubSet, remove(11) : IllegalArgumentException");
-        }
+        runable = () -> subSet.remove(11);
+        assertThrows(IllegalArgumentException.class, runable);
 
-        try{
-            subSet = tailSet.subSet(4, 11);
-        }catch (IndexOutOfBoundsException e){
-            System.out.println("TailSetSubSet, create(4, 11) : IndexOutOfBoundsException");
-        }
-
+        runable = () -> tailSet.subSet(4,11);
+        assertThrows(IndexOutOfBoundsException.class, runable);
     }
 
     @Test
     public void tailSetHeadSet(){
-        Tree tree = new Tree<Integer>();
+        Tree<Integer> tree = new Tree<>();
         tree.add(13);
         tree.add(7);
         tree.add(4);
@@ -780,22 +713,16 @@ public class tests {
         Assert.assertFalse(tree.contains(9));
         Assert.assertTrue(tree.checkInvariant());
 
-        try{
-            headSet.remove(2);
-        }catch (IllegalArgumentException e){
-            System.out.println("TailSetHeadSet, remove(2) : IllegalArgumentException");
-        }
+        Runnable runable = () -> headSet.remove(2);
+        assertThrows(IllegalArgumentException.class, runable);
 
-        try{
-            headSet.add(15);
-        }catch (IllegalArgumentException e){
-            System.out.println("TailSetTailSet, add(15) : IllegalArgumentException");
-        }
+        runable = () -> headSet.remove(2);
+        assertThrows(IllegalArgumentException.class, runable);
     }
 
     @Test
-    public void tailSetIterator(){
-        Tree tree = new Tree<Integer>();
+    public void tailSetIterator()  {
+        Tree<Integer> tree = new Tree<>();
         tree.add(1);
         tree.add(2);
         tree.add(12);
@@ -807,7 +734,7 @@ public class tests {
         SortedSet tailSet = tree.tailSet(11);
         Iterator iterator = tailSet.iterator();
 
-        Assert.assertTrue(iterator.hasNext());
+        Assert.assertTrue(iterator.hasNext());            //find net переходит дальше
         Assert.assertEquals(11, iterator.next());
         Assert.assertTrue(iterator.hasNext());
         Assert.assertEquals(12, iterator.next());
@@ -817,10 +744,7 @@ public class tests {
         Assert.assertEquals(17, iterator.next());
         Assert.assertFalse(iterator.hasNext());
 
-        try{
-            iterator.next();
-        }catch (NoSuchElementException e){
-            System.out.println("tailSetIterator test: NoSuchElementException");
-        }
+        Runnable runable = iterator::next;
+        assertThrows(NoSuchElementException.class, runable);
     }
 }

@@ -1,6 +1,5 @@
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.reflect.generics.tree.*;
 
 import java.util.*;
 
@@ -30,6 +29,8 @@ public class HeadSet<T extends Comparable<T>> extends AbstractSet<T> implements 
 
     @Override
     public boolean remove(Object o) {
+
+        @SuppressWarnings("unchecked")
         T value = (T) o;
 
         if ((toElement.compareTo(value) > 0 && delegate.first().compareTo(value) < 0) && contains(value)) delegate.remove(value);
@@ -42,57 +43,55 @@ public class HeadSet<T extends Comparable<T>> extends AbstractSet<T> implements 
     public boolean contains(Object o) {
         T value = (T) o;
 
-        Iterator iterator = this.iterator();
+        Iterator<T> iterator = this.iterator();
         while(iterator.hasNext()){
-            if (value.compareTo((T) iterator.next()) == 0) return true;
+            if (value.compareTo(iterator.next()) == 0) return true;
         }
         return false;
     }
 
+    @NotNull
     @Override
     public Iterator<T> iterator() {
         return new HeadSetIterator();
     }
 
     public class HeadSetIterator implements Iterator<T>{
+        Iterator<T> iterator = delegate.iterator();
+        T current = null;
+        T currentNext = findNext();
 
-        private List<T> listOfNodes;
-
-        private HeadSetIterator(){
-            listOfNodes = new ArrayList<>();
-            fillListOfNodes();
-        }
-
-        private void fillListOfNodes(){
-            Iterator iterator = delegate.iterator();
-            while (iterator.hasNext()){
-                T next = (T) iterator.next();
-                if (next.compareTo(toElement) < 0) listOfNodes.add(next);
+        private T findNext(){
+            while(iterator.hasNext()) {
+                T next = iterator.next();
+                if (next.compareTo(toElement) < 0) {
+                    currentNext = next;
+                    return next;
+                }
             }
+            return null;
         }
 
         @Override
         public boolean hasNext() {
-            return !listOfNodes.isEmpty();
+            return currentNext != null;
         }
 
         @Override
         public T next() {
-            if (hasNext()){
-                T result = listOfNodes.get(0);
-                listOfNodes.remove(0);
-                return result;
-            }
-            else throw new NoSuchElementException();
+            if (currentNext == null) throw new NoSuchElementException();
+            current = currentNext;
+            currentNext = findNext();
+            return current;
         }
     }
 
     @Override
     public int size() {
         int result =0;
-        Iterator iterator = delegate.iterator();
+        Iterator<T> iterator = delegate.iterator();
         while (iterator.hasNext()){
-            T next = (T) iterator.next();
+            T next = iterator.next();
             if (toElement.compareTo(next) > 0) result++;
         }
 
@@ -132,10 +131,10 @@ public class HeadSet<T extends Comparable<T>> extends AbstractSet<T> implements 
 
     @Override
     public T first() {
-        Iterator iterator = delegate.iterator();
+        Iterator<T> iterator = delegate.iterator();
         T result = null;
         while (iterator.hasNext()){
-            T next = (T) iterator.next();
+            T next = iterator.next();
             if (next.compareTo(toElement) < 0) {
                 if (result == null) result = next;
                 else result = result.compareTo(next) > 0 ? next : result;
@@ -146,10 +145,10 @@ public class HeadSet<T extends Comparable<T>> extends AbstractSet<T> implements 
 
     @Override
     public T last() {
-        Iterator iterator = delegate.iterator();
+        Iterator<T> iterator = delegate.iterator();
         T result = null;
         while(iterator.hasNext()){
-            T next = (T) iterator.next();
+            T next = iterator.next();
             if (next.compareTo(toElement) < 0) {
                 if (result == null) result = next;
                 else result = result.compareTo(next) < 0 && next.compareTo(toElement) < 0 ? next : result;

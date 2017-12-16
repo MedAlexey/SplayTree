@@ -10,16 +10,16 @@ public class Tree<T extends Comparable<T>> extends AbstractSet<T> implements Sor
     private int size = 0;
 
     static class TreeNode<T> {
-        TreeNode leftSon;
-        TreeNode rightSon;
-        TreeNode parent;
+        TreeNode<T> leftSon;
+        TreeNode<T> rightSon;
+        TreeNode<T> parent;
         T value;
 
 
         TreeNode(T value,
-                 TreeNode parent,
-                 TreeNode leftSon,
-                 TreeNode rightSon){
+                 TreeNode<T> parent,
+                 TreeNode<T> leftSon,
+                 TreeNode<T> rightSon){
             this.value = value;
             this.parent = parent;
             this.leftSon = leftSon;
@@ -50,28 +50,30 @@ public class Tree<T extends Comparable<T>> extends AbstractSet<T> implements Sor
     @Override
     public T first() {
         if (root == null) throw new NoSuchElementException();
-        TreeNode current = root;
+        TreeNode<T> current = root;
         while (current.leftSon != null) {
             current = current.leftSon;
         }
-        return (T) current.value;
+        return current.value;
     }
 
     @Override
     public T last() {
         if(root == null) throw new NoSuchElementException();
-        TreeNode current = root;
+        TreeNode<T> current = root;
         while (current.rightSon != null){
             current = current.rightSon;
         }
-        return (T) current.value;
+        return current.value;
     }
 
 
-    public T getRootValue() { return (T) root.value;}
+    public T getRootValue() { return root.value;}
 
 
     public void find(T value){
+        if (!contains(value)) throw new NoSuchElementException();
+
         TreeNode<T> currentNode = root;
 
 
@@ -90,6 +92,7 @@ public class Tree<T extends Comparable<T>> extends AbstractSet<T> implements Sor
     }
 
 
+    @NotNull
     @Override
     public  Iterator<T> iterator() {
         return new TreeIterator();
@@ -99,34 +102,38 @@ public class Tree<T extends Comparable<T>> extends AbstractSet<T> implements Sor
 
         private TreeNode<T> current = null;
 
-        private List<TreeNode> listOfNodes;
+        private TreeNode<T> findNext() {
+            TreeNode<T> next = current;
 
-        private TreeIterator() {
-            listOfNodes = new ArrayList<>();
-            fillListOfNodes(root);
-        }
-
-        private void fillListOfNodes(TreeNode current){
-            listOfNodes.add(current);
-            if (current.leftSon != null) fillListOfNodes(current.leftSon);
-            if (current.rightSon != null) fillListOfNodes(current.rightSon);
-        }
-
-        private TreeNode findNext() {
-            if (listOfNodes.isEmpty()) return null;
-
-            TreeNode<T> result = listOfNodes.get(0);
-            if (current == null){
-                for (TreeNode<T> node: listOfNodes){
-                    if (node.value.compareTo(result.value) < 0){ result = node; }
-                }
-            }
-            else {
-                for (TreeNode<T> node : listOfNodes) {
-                    if (node.value.compareTo(result.value) < 0 && node.value.compareTo(current.value) > 0) {  result = node;  }
-                }
+            if (next == null){
+               next = first();
+               return next;
             }
 
+           if (next.rightSon != null){
+               next = next.rightSon;
+               while (next.leftSon != null) next = next.leftSon;
+               return next;
+           }
+
+           while (next.parent != null){
+               if (next.parent.leftSon == next){
+                   next = next.parent;
+                   return next;
+               }
+               next = next.parent;
+           }
+
+           return null;
+
+        }
+
+        private TreeNode<T> first(){
+            if (root == null) throw new NoSuchElementException();
+            TreeNode<T> result = root;
+            while (result.leftSon != null) {
+                result = result.leftSon;
+            }
             return result;
         }
 
@@ -139,8 +146,7 @@ public class Tree<T extends Comparable<T>> extends AbstractSet<T> implements Sor
         public T next() {
             current = findNext();
             if (current == null) throw new NoSuchElementException();
-            listOfNodes.remove(current);
-            return (T) current.value;
+            return current.value;
         }
 
         @Override
@@ -158,7 +164,7 @@ public class Tree<T extends Comparable<T>> extends AbstractSet<T> implements Sor
     @Override
     public boolean add(T value){
         if (root == null) {
-            root = new TreeNode(value, null,null,null);
+            root = new TreeNode<T>(value, null,null,null);
             size ++;
         }
         else {
@@ -176,7 +182,7 @@ public class Tree<T extends Comparable<T>> extends AbstractSet<T> implements Sor
                 if (cmp < 0) {
                     if (currentNode.rightSon != null) currentNode = currentNode.rightSon;
                     else {
-                        currentNode.rightSon = new TreeNode(value, currentNode, null, null);
+                        currentNode.rightSon = new TreeNode<T>(value, currentNode, null, null);
                         splay(currentNode.rightSon);
                         size ++;
                         return true;
@@ -186,7 +192,7 @@ public class Tree<T extends Comparable<T>> extends AbstractSet<T> implements Sor
                 if (cmp > 0) {
                     if (currentNode.leftSon != null) currentNode = currentNode.leftSon;
                     else {
-                        currentNode.leftSon = new TreeNode(value, currentNode, null, null);
+                        currentNode.leftSon = new TreeNode<T>(value, currentNode, null, null);
                         splay(currentNode.leftSon);
                         size ++;
                         return true;
@@ -199,12 +205,17 @@ public class Tree<T extends Comparable<T>> extends AbstractSet<T> implements Sor
 
     }
 
+    @Override
+    public boolean remove(Object o){
+        @SuppressWarnings("unchecked")
+        T value = (T) o;
 
-    public void remove(T value){
+        if (!contains(value)) return false;
+
         find(value);                     // поднимает удаляемый эл-т
 
-        TreeNode leftTreeRoot = root.leftSon;
-        TreeNode rightTreeRoot = root.rightSon;
+        TreeNode<T> leftTreeRoot = root.leftSon;
+        TreeNode<T> rightTreeRoot = root.rightSon;
 
         if (leftTreeRoot != null) {
             leftTreeRoot = findMax(leftTreeRoot);                //ищем мах элемент левого дерева и поднимаем его вверх
@@ -215,18 +226,18 @@ public class Tree<T extends Comparable<T>> extends AbstractSet<T> implements Sor
 
             root = leftTreeRoot;
             size --;
+            return true;
         }
         else{
             rightTreeRoot.parent = null;
             root = rightTreeRoot;
             size --;
+            return true;
         }
-
-
     }
 
-    private TreeNode findMax(TreeNode root){
-        TreeNode currentNode = root;
+    private TreeNode<T> findMax(TreeNode<T> root){
+        TreeNode<T> currentNode = root;
 
         while (currentNode.rightSon != null){
             currentNode = currentNode.rightSon;
@@ -236,11 +247,11 @@ public class Tree<T extends Comparable<T>> extends AbstractSet<T> implements Sor
         return currentNode;
     }
 
-    private void splay(TreeNode node){
+    private void splay(TreeNode<T> node){
         if (node.parent == null) return;
 
-        TreeNode parent = node.parent;
-        TreeNode gparent = parent.parent;
+        TreeNode<T> parent = node.parent;
+        TreeNode<T> gparent = parent.parent;
 
         if (gparent == null){
             if (parent.leftSon == node) {
@@ -270,8 +281,8 @@ public class Tree<T extends Comparable<T>> extends AbstractSet<T> implements Sor
         splay(node); //может быть лучше сделать while ?
     }
 
-    private void rightRotate(TreeNode parent, TreeNode node){
-        TreeNode nodeRightSon = node.rightSon;
+    private void rightRotate(TreeNode<T> parent, TreeNode<T> node){
+        TreeNode<T> nodeRightSon = node.rightSon;
 
         node.rightSon = parent;
         parent.parent = node;
@@ -282,8 +293,8 @@ public class Tree<T extends Comparable<T>> extends AbstractSet<T> implements Sor
 
     }
 
-    private void leftRotate(TreeNode parent, TreeNode node){
-        TreeNode nodeLeftSon = node.leftSon;
+    private void leftRotate(TreeNode<T> parent, TreeNode<T> node){
+        TreeNode<T> nodeLeftSon = node.leftSon;
 
         node.leftSon = parent;
         node.parent = null;
@@ -293,10 +304,10 @@ public class Tree<T extends Comparable<T>> extends AbstractSet<T> implements Sor
         if (nodeLeftSon != null) nodeLeftSon.parent = parent;
     }
 
-    private void leftZigZig(TreeNode gparent, TreeNode parent, TreeNode node){
+    private void leftZigZig(TreeNode<T> gparent, TreeNode<T> parent, TreeNode<T> node){
 
         //first rotate
-        TreeNode parentRightSon = parent.rightSon;
+        TreeNode<T> parentRightSon = parent.rightSon;
 
         parent.rightSon = gparent;
         parent.parent = gparent.parent;
@@ -307,7 +318,7 @@ public class Tree<T extends Comparable<T>> extends AbstractSet<T> implements Sor
         if (parentRightSon != null) parentRightSon.parent = gparent;
 
         //second rotate
-        TreeNode nodeRightSon = node.rightSon;
+        TreeNode<T> nodeRightSon = node.rightSon;
 
         node.rightSon = parent;
         node.parent = parent.parent;
@@ -319,10 +330,10 @@ public class Tree<T extends Comparable<T>> extends AbstractSet<T> implements Sor
         if (node.parent == null) root = node;
     }
 
-    private void rightZigZig(TreeNode gparent, TreeNode parent, TreeNode node){
+    private void rightZigZig(TreeNode<T> gparent, TreeNode<T> parent, TreeNode<T> node){
 
         //first rotate
-        TreeNode parentLeftSon = parent.leftSon;
+        TreeNode<T> parentLeftSon = parent.leftSon;
 
         parent.leftSon = gparent;
         parent.parent = gparent.parent;
@@ -333,7 +344,7 @@ public class Tree<T extends Comparable<T>> extends AbstractSet<T> implements Sor
         if (parentLeftSon != null) parentLeftSon.parent = gparent;
 
         //second rotate
-        TreeNode nodeLeftSon = node.leftSon;
+        TreeNode<T> nodeLeftSon = node.leftSon;
 
         node.leftSon = parent;
         node.parent = parent.parent;
@@ -346,10 +357,10 @@ public class Tree<T extends Comparable<T>> extends AbstractSet<T> implements Sor
         if (node.parent == null) root = node;
     }
 
-    private void rightZigZag(TreeNode gparent, TreeNode parent, TreeNode node){
+    private void rightZigZag(TreeNode<T> gparent, TreeNode<T> parent, TreeNode<T> node){
 
         // first rotate
-        TreeNode nodeLeftSon = node.leftSon;
+        TreeNode<T> nodeLeftSon = node.leftSon;
 
         gparent.leftSon = node;
         node.parent = gparent;
@@ -359,7 +370,7 @@ public class Tree<T extends Comparable<T>> extends AbstractSet<T> implements Sor
         if (nodeLeftSon != null) nodeLeftSon.parent = parent;
 
         //second rotate
-        TreeNode nodeRightSon = node.rightSon;
+        TreeNode<T> nodeRightSon = node.rightSon;
 
         node.rightSon = gparent;
         node.parent = gparent.parent;
@@ -372,10 +383,10 @@ public class Tree<T extends Comparable<T>> extends AbstractSet<T> implements Sor
         if (node.parent == null) root = node;
     }
 
-    private void leftZigZag(TreeNode gparent, TreeNode parent, TreeNode node){
+    private void leftZigZag(TreeNode<T> gparent, TreeNode<T> parent, TreeNode<T> node){
 
         //first rotate
-        TreeNode nodeRightSon = node.rightSon;
+        TreeNode<T> nodeRightSon = node.rightSon;
 
         gparent.rightSon = node;
         node.parent = gparent;
@@ -385,7 +396,7 @@ public class Tree<T extends Comparable<T>> extends AbstractSet<T> implements Sor
         if (nodeRightSon != null) nodeRightSon.parent = parent;
 
         //secont rotate
-        TreeNode nodeLeftSon = node.leftSon;
+        TreeNode<T> nodeLeftSon = node.leftSon;
 
         node.leftSon = gparent;
         node.parent = gparent.parent;
@@ -398,7 +409,7 @@ public class Tree<T extends Comparable<T>> extends AbstractSet<T> implements Sor
         if (node.parent == null) root = node;
     }
 
-    private void setParent(TreeNode previousSon, TreeNode newSon){     //for ggParent
+    private void setParent(TreeNode previousSon, TreeNode<T> newSon){     //for ggParent
         if (newSon.parent != null){
             if (previousSon.parent.leftSon == previousSon) previousSon.parent.leftSon = newSon;
             else previousSon.parent.rightSon = newSon;
